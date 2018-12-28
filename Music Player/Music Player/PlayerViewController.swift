@@ -141,6 +141,16 @@ class PlayerViewController: UIViewController, ChangeSong {
     
     // MARK: - ViewDidLoad
     
+    fileprivate func setCategoryPlayback() {
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            try audioSession.setCategory(AVAudioSessionCategoryPlayback)
+        }
+        catch {
+            
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -148,6 +158,8 @@ class PlayerViewController: UIViewController, ChangeSong {
         findSongPath()
         updatePlayerUI()
         observeCurrentTime()
+        setCategoryPlayback()
+        
     }
     
     
@@ -195,6 +207,7 @@ class PlayerViewController: UIViewController, ChangeSong {
             let url = URL(fileURLWithPath: path)
             playerItem = AVPlayerItem(url: url)
             audioPlayer = AVPlayer(playerItem: playerItem)
+
         } else {
             let alertController = UIAlertController(title: "錯誤", message: "找不到此歌曲。", preferredStyle: UIAlertControllerStyle.alert)
             let alertAction = UIAlertAction(title: "OK", style: UIAlertActionStyle.cancel, handler: nil)
@@ -234,6 +247,7 @@ class PlayerViewController: UIViewController, ChangeSong {
         if recyclePlay {
             let targetTime:CMTime = CMTimeMake(0, 1)
             audioPlayer?.seek(to: targetTime)
+            
             audioPlayer?.play()
         } else {
             if let playlistVC = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "PlaylistViewController") as? PlaylistViewController {
