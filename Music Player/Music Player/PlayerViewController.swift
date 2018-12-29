@@ -8,7 +8,7 @@
 
 import UIKit
 import AVFoundation
-
+import MediaPlayer
 class PlayerViewController: UIViewController, ChangeSong {
     
     // Change song delegate
@@ -24,6 +24,25 @@ class PlayerViewController: UIViewController, ChangeSong {
         observeCurrentTime()
         audioPlayer?.play()
         playButton.setImage(UIImage(named: "icons8-pause"), for: UIControlState.normal)
+    }
+    func setNowPlayingInfo()
+    {
+        let nowPlayingInfoCenter = MPNowPlayingInfoCenter.default()
+        var nowPlayingInfo = nowPlayingInfoCenter.nowPlayingInfo ?? [String: Any]()
+        
+        let title = "title"
+        let album = "album"
+        let artworkData = Data()
+        let image = UIImage(data: artworkData) ?? UIImage()
+        let artwork = MPMediaItemArtwork(boundsSize: image.size, requestHandler: {  (_) -> UIImage in
+            return image
+        })
+        
+        nowPlayingInfo[MPMediaItemPropertyTitle] = title
+        nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = album
+        nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork
+        
+        nowPlayingInfoCenter.nowPlayingInfo = nowPlayingInfo
     }
     
     // Audio Player
@@ -203,12 +222,14 @@ class PlayerViewController: UIViewController, ChangeSong {
     
     func findSongPath() {
         
-        if let path = Bundle.main.path(forResource: songFile, ofType: ".mp3"){
-            let url = URL(fileURLWithPath: path)
-            playerItem = AVPlayerItem(url: url)
+        if let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            
+            let fileURL = dir.appendingPathComponent(songFile + ".mp3")
+            playerItem = AVPlayerItem(url: fileURL)
             audioPlayer = AVPlayer(playerItem: playerItem)
 
-        } else {
+        }
+        else {
             let alertController = UIAlertController(title: "錯誤", message: "找不到此歌曲。", preferredStyle: UIAlertControllerStyle.alert)
             let alertAction = UIAlertAction(title: "OK", style: UIAlertActionStyle.cancel, handler: nil)
             alertController.addAction(alertAction)
@@ -228,7 +249,26 @@ class PlayerViewController: UIViewController, ChangeSong {
         
         NotificationCenter.default.addObserver(self, selector: #selector(playToEndTime), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: playerItem)
     }
-    
+    override func remoteControlReceived(with event: UIEvent?) {
+        switch event?.subtype {
+        case UIEventSubtype.remoteControlPlay?: // 音乐播放
+            audioPlayer?.play()
+            break
+        case UIEventSubtype.remoteControlPause?: // 音乐暂停
+            audioPlayer?.pause()
+            break
+//        case UIEventSubtype.remoteControlPreviousTrack?: //上一首
+//            break;
+//        case UIEventSubtype.remoteControlNextTrack?: //下一首
+//            audioPlayer.advanceToNextItem()
+//            break;
+        case UIEventSubtype.remoteControlTogglePlayPause?: //耳机线控的播放暂停
+            break
+        default:
+            break
+        }
+        
+    }
     func updatePlayerUI() {
         
         let duration = playerItem!.asset.duration

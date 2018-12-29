@@ -19,24 +19,40 @@ class PlaylistViewController: UIViewController, UITableViewDelegate, UITableView
     
     var changeSongDelegate:ChangeSong?
     
-    var playlist = [
-        SongModel(songImage: "Chouchou musubi", songFile: "Aimer - Choucho Musubi"),
-        SongModel(songImage: "Chandelier", songFile: "Sia - Chandelier"),
-        SongModel(songImage: "Dusk till dawn", songFile: "ZAYN - Dusk Till Dawn")
+    var playlist: [SongModel] = [
     ]
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        UIApplication.shared.beginReceivingRemoteControlEvents()
         setGradientLayer()
         playlistTableView.delegate = self
         playlistTableView.dataSource = self
+        listMp3s()
 
         // Do any additional setup after loading the view.
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
+    }
+    fileprivate func listMp3s() {
+        let fileManager = FileManager.default
+        let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        do {
+            let directoryContents = try fileManager.contentsOfDirectory(at: documentsURL, includingPropertiesForKeys: nil)
+            playlist = directoryContents
+                .filter{ $0.pathExtension == "mp3" }
+                .map { url -> SongModel in
+                    return SongModel(songImage: url.deletingPathExtension().lastPathComponent, songFile: url.deletingPathExtension().lastPathComponent)
+                    
+                }
+            // process files
+        } catch {
+            print("Error while enumerating files \(documentsURL.path): \(error.localizedDescription)")
+        }
     }
     
     // MARK: - TableView Delegate
